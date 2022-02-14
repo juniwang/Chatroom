@@ -10,45 +10,73 @@ First let's provision a SignalR service on Azure.
 2. Navigate to "SignalR Service" and click "Create".
 3. Fill in basic information including resource name, resource group and location.
 4. Click "Create", your SignalR service will be created in a few minutes.
+5. Create another resource in a different location.
 
 After your service is ready, go to the **Keys** page of your service instance and you'll get two connection strings that your application can use to connect to the service.
 
-## Update Chat Room to Use Azure SignalR Service
+## Set Chat Rooms to Use Azure SignalR Service
 
 Then, let's update the chat room sample to use the new service you just created.
 
-Let's look at the key changes:
+Start the first Chatroom:
 
-1.  In [Startup.cs](Startup.cs), call `AddAzureSignalR()` after `AddSignalR()` and pass in connection string to make the application connect to the service instead of hosting SignalR by itself.
+1. In [Startup.cs](Startup.cs), in `ConfigureServices()` method, update the connection strings of the `ServiceEndpoint`. You can copy the connection string from Azure portal.
 
     ```cs
     public void ConfigureServices(IServiceCollection services)
     {
         ...
         services.AddSignalR()
-                .AddAzureSignalR();
+                .AddAzureSignalR(options =>
+                    {
+                        options.Endpoints = new ServiceEndpoint[2]
+                        {
+                            new ServiceEndpoint("conn1", EndpointType.Primary, "Primary"),
+                            new ServiceEndpoint("conn2", EndpointType.Secondary, "Secondary"),
+                        };
+                    });
     }
     ```
 
-    You also need to reference the service SDK before using these APIs. This is how that would look in your ChatRoom.csproj file:
-
-    ```xml
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.*" />
-    ```
-
-Other than these changes, everything else remains the same, you can still use the hub interface you're already familiar with to write business logic.
-
-> Under the hood, an endpoint `/chat/negotiate` is exposed for negotiation by Azure SignalR Service SDK. It will return a special negotiation response when clients try to connect and redirect clients to service endpoint from the connection string. Read more details about the redirection at SignalR's [Negotiation Protocol](https://github.com/aspnet/SignalR/blob/master/specs/TransportProtocols.md#post-endpoint-basenegotiate-request).
-
-
-Now set the connection string in the [Secret Manager](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=visual-studio#secret-manager) tool for .NET Core, and run this app.
+Now run this app:
 
 ```
-dotnet restore
-dotnet user-secrets set Azure:SignalR:ConnectionString "<your connection string>"
+dotnet build
 dotnet run
 ```
 
-When you open http://localhost:5000, you can see the application runs as usual, just instead of hosting a SignalR runtime by itself, it connects to the SignalR service running on Azure.
+2. Run another chat room. Copy the `src` folder to a different place. And switch the `Primary` and `Secondary` endpoints.
 
-In this sample, you have learned how to use Azure SignalR Service to replace your self-hosted SignalR runtime. But you still need a web server to host your hub logic. In the next tutorial you'll learn how to use other Azure services to host your hub logic so you can get everything running in the cloud.
+    ```cs
+    public void ConfigureServices(IServiceCollection services)
+    {
+        ...
+        services.AddSignalR()
+                .AddAzureSignalR(options =>
+                    {
+                        options.Endpoints = new ServiceEndpoint[2]
+                        {
+                            new ServiceEndpoint("conn2", EndpointType.Primary, "Primary"),
+                            new ServiceEndpoint("conn1", EndpointType.Secondary, "Secondary"),
+                        };
+                    });
+    }
+
+ and update the `properties\launchSettings.json` to set it to a different port like `5001`:
+
+    ```json
+        "ChatRoom": {
+          "commandName": "Project",
+          "launchBrowser": true,
+          "environmentVariables": {
+            "ASPNETCORE_ENVIRONMENT": "Development"
+          },
+          "applicationUrl": "http://localhost:5001/"
+        }
+    ```
+
+Then run with `dotnet run`.
+
+3. Open browser and visit `http://localhost:5000` to begin a failover process. Be sure to open developer tools to trace the network.
+4. Restart the Primary SignalR resource, where both Chat rooms are expected to see failure connecting to it, and the web page of the client session in browser should be keep running without any issue. The network trace shows it automatically connects to Seconary SignalR.
+5. After restart operation completed, both Chat Rooms connect two both SignalR successfully again. And the web page continues working without no error.
