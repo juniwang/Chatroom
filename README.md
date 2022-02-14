@@ -1,34 +1,15 @@
 # Build Your First Azure SignalR Service Application
 
-In [ChatRoomLocal sample](../ChatRoomLocal) you have learned how to use SignalR to build a chat room application. In that sample, the SignalR runtime (which manages the client connections and message routing) is running on your local machine. As the number of the clients increases, you'll eventually hit a limit on your machine and you'll need to scale up your machine to handle more clients. This is usually not an easy task. In this tutorial, you'll learn how to use Azure SignalR Service to offload the connection management part to the service so that you don't need to worry about the scaling problem.
+In [ChatRoomLocal sample](https://github.com/aspnet/AzureSignalR-samples/tree/main/samples/ChatRoomLocal) you have learned how to use SignalR to build a chat room application. In that sample, the SignalR runtime (which manages the client connections and message routing) is running on your local machine. As the number of the clients increases, you'll eventually hit a limit on your machine and you'll need to scale up your machine to handle more clients. This is usually not an easy task. In this tutorial, you'll learn how to use Azure SignalR Service to offload the connection management part to the service so that you don't need to worry about the scaling problem.
 
 ## Provision a SignalR Service
 
 First let's provision a SignalR service on Azure.
-> If you don't have an Azure subscription, **[start now](https://azure.microsoft.com/en-us/free/)** to create a free account.
 
 1. Open Azure portal, click "Create a resource" and search "SignalR Service".
-
-   ![signalr-4](../../docs/images/signalr-4.png)
-
 2. Navigate to "SignalR Service" and click "Create".
-   
-   ![signalr-5](../../docs/images/signalr-5.png)
-
 3. Fill in basic information including resource name, resource group and location.
-
-   ![signalr-2](../../docs/images/signalr-2.png)
-
-   Resource name will also be used as the DNS name of your service endpoint. So you'll get a `<resource_name>.service.signalr.net` that your application can connect to.
-
-   Select a pricing tier. There're two pricing tiers:
-   
-   * Free: which can handle 20 connections at the same time and can send and receive 20,000 messages in a day.
-   * Standard: which has 1000 concurrent connections and one million messages per day limit for *one unit*. You can scale up to 100 units for a single service instance and you'll be charged by the number of units you use.
-
 4. Click "Create", your SignalR service will be created in a few minutes.
-
-   ![signalr-3](../../docs/images/signalr-3.png)
 
 After your service is ready, go to the **Keys** page of your service instance and you'll get two connection strings that your application can use to connect to the service.
 

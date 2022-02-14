@@ -13,7 +13,14 @@ namespace Microsoft.Azure.SignalR.Samples.ChatRoom
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSignalR()
-                    .AddAzureSignalR();
+                    .AddAzureSignalR(options =>
+                    {
+                        options.Endpoints = new ServiceEndpoint[2]
+                        {
+                            new ServiceEndpoint("conn1", EndpointType.Primary, "Primary"),
+                            new ServiceEndpoint("conn2", EndpointType.Secondary, "Secondary"),
+                        };
+                    });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
